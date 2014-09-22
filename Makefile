@@ -2,7 +2,7 @@
 EXT_LIBS = sdl2 libglog
 
 CXX = clang++
-CXXFLAGS = -std=c++11 -g
+CXXFLAGS = -std=c++11 -Wall -pedantic -g
 CPPFLAGS = -Isrc/ $(shell pkg-config --cflags $(EXT_LIBS))
 LDLIBS = $(shell pkg-config --libs $(EXT_LIBS))
 
@@ -28,6 +28,10 @@ hello-sdl: $(OBJS)
 $(BUILD_DIR)/%.o: src/%.cc
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MMD -o $@ -c $<
+
+.PHONY: cflags
+cflags:
+	@echo $(CPPFLAGS) $(CXXFLAGS)
 
 # Clean* rules
 # ------------
