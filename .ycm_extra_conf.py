@@ -43,6 +43,7 @@ flags = [
   '-DUSE_CLANG_COMPLETER',
   '-std=c++11',  # IMPORTANT (else clang guesses (badly) what lang to use)
   '-x', 'c++',  # IMPORTANT
+  '-I/usr/include',
   '-isystem', os.path.join(ycmd_location, 'cpp/BoostParts'),
   '-isystem', os.path.join(ycmd_location, 'cpp/llvm/include'),
 ]
