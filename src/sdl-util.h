@@ -1,3 +1,5 @@
+// Simple utilities for managing SDL resources using RAII.
+
 #ifndef SDH_UTIL_H_
 #define SDH_UTIL_H_
 
