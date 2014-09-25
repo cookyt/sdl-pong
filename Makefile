@@ -1,17 +1,20 @@
 # External libraries. Configured using `pkg-config`
-EXT_LIBS = sdl2 libglog
+EXT_LIBS := sdl2 libglog eigen3
 
 CXX = clang++
 CXXFLAGS = -std=c++11 -Wall -pedantic -g
-CPPFLAGS = -Isrc/ $(shell pkg-config --cflags $(EXT_LIBS))
-LDLIBS = $(shell pkg-config --libs $(EXT_LIBS))
+CPPFLAGS := $(shell pkg-config --cflags $(EXT_LIBS)) \
+            -Isrc/ \
+            -DEIGEN_DONT_ALIGN  # trade performance for simpler code
+LDLIBS := $(shell pkg-config --libs $(EXT_LIBS)) \
+          -lm
 
 # Where object and dependency files are placed (out-of-tree build)
 BUILD_DIR = build
 
-SRCS = src/hello-sdl.cc
-OBJS = $(subst src,$(BUILD_DIR),$(subst .cc,.o,$(SRCS)))
-DEPS = $(subst .o,.d,$(OBJS))  # Auto-generated dependencies
+SRCS = src/hello-sdl.cc src/pieces.cc
+OBJS := $(SRCS:src/%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:%.o=%.d)  # Auto-generated dependencies
 
 # Binaries
 # --------
@@ -25,7 +28,7 @@ hello-sdl: $(OBJS)
 # purpose is to recompile source files when dependent header files change.
 -include $(DEPS)
 
-$(BUILD_DIR)/%.o: src/%.cc
+$(BUILD_DIR)/%.cc.o: src/%.cc
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MMD -o $@ -c $<
 
