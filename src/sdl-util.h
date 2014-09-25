@@ -1,6 +1,10 @@
 #ifndef SDH_UTIL_H_
 #define SDH_UTIL_H_
 
+#include <memory>
+
+#include <SDL.h>
+
 #define DISALLOW_COPY_AND_ASSIGN(ClassName)  \
   ClassName(const ClassName&) = delete;      \
   ClassName& operator=(ClassName) = delete;
