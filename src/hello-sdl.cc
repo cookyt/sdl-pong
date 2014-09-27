@@ -38,7 +38,7 @@ class DPad {
   template<int Dir>
   bool IsSet() const {
     AssertValidButtonCombo<Dir>();
-    return static_cast<bool>((bits_ & Dir));
+    return (bits_ & Dir) != 0;
   }
 
   template<int Dir>
@@ -67,11 +67,10 @@ class DPad {
   }
 
   friend std::ostream& operator<<(std::ostream& out, const DPad& dpad) {
-    return out << format("U:%d D:%d L:%d R:%d") %
-               (dpad.IsSet<DPad::UP>()) %
-               (dpad.IsSet<DPad::DOWN>()) %
-               (dpad.IsSet<DPad::LEFT>()) %
-               (dpad.IsSet<DPad::RIGHT>());
+    return out << format("U:%d D:%d L:%d R:%d") % (dpad.IsSet<DPad::UP>())
+                                                % (dpad.IsSet<DPad::DOWN>())
+                                                % (dpad.IsSet<DPad::LEFT>())
+                                                % (dpad.IsSet<DPad::RIGHT>());
   }
 
  private:
@@ -85,19 +84,13 @@ class DPad {
   }
 
   template <int Dir>
-  const char* DirectionName() {
-    switch(Dir) {
-      case UP:
-        return "U";
-      case DOWN:
-        return "D";
-      case LEFT:
-        return "L";
-      case RIGHT:
-        return "R";
-      default:
-        return "";
-    }
+  static constexpr const char* DirectionName() {
+    return
+        Dir == UP    ? "U" :
+        Dir == DOWN  ? "D" :
+        Dir == LEFT  ? "L" :
+        Dir == RIGHT ? "R" :
+        0;
   }
 
   int bits_ = 0;
