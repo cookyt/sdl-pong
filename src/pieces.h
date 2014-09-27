@@ -15,30 +15,28 @@ namespace pong {
 // everywhere.
 namespace direction {
 enum class Vertical {
-  UP   = -1,
+  UP = -1,
   NONE = 0,
   DOWN = 1,
 };
 enum class Horizontal {
-  LEFT  = -1,
-  NONE  = 0,
+  LEFT = -1,
+  NONE = 0,
   RIGHT = 1,
 };
 }  // namespace direction
 
 class Ball {
  public:
-  const Eigen::Vector2d kAccel = {50, 50};
-  const Eigen::Vector2d kMaxVel = {50, 50};
+  const double kAcceleration = 50;
+  const double kMaxVel = 50;
   const double kFrictionAccel = 3;
 
-  // Returns a rectangle that can be used to render the ball.
-  SDL_Rect AsRect();
+  SDL_Rect BoundingBox() const;
 
   // Applies friction, acceleration, and velocity to the ball. See Accelerate()
   // for parameter definitions.
-  void Move(direction::Vertical vert, direction::Horizontal horz,
-            int millis_delta);
+  void Move(const Eigen::Vector2d& direction, int millis_delta);
 
   friend std::ostream& operator<<(std::ostream& out, const Ball& ball);
 
@@ -55,8 +53,7 @@ class Ball {
   // vert: What direction to accelerate in the y axis
   // horz: what direction to accelerate in the x axis
   // seconds_delta: number of seconds the ball is moving over.
-  void Accelerate(direction::Vertical vert, direction::Horizontal horz,
-                  double seconds_delta);
+  void Accelerate(const Eigen::Vector2d& unit_direction, double seconds_delta);
 
   Eigen::Vector2d vel_ {0, 0};
   Eigen::Vector2d pos_ {0, 0};

@@ -4,13 +4,14 @@
 #include <boost/format.hpp>
 #include <glog/logging.h>
 
+#include "eigen-util.h"
 #include "pieces.h"
 
 using boost::format;
 
 namespace pong {
 
-SDL_Rect Ball::AsRect() {
+SDL_Rect Ball::BoundingBox() const {
   // TODO: width and height are arbitrary atm.
   return {
       static_cast<int>(pos_.x()),
@@ -20,11 +21,18 @@ SDL_Rect Ball::AsRect() {
   };
 }
 
-void Ball::Move(direction::Vertical vert, direction::Horizontal horz,
-                int millis_delta) {
+void Ball::Move(const Eigen::Vector2d& direction, int millis_delta) {
   double seconds_delta = (static_cast<double>(millis_delta) / 1000.);
+
+  Eigen::Vector2d unit_direction;
+  if (direction.isZero()) {
+    unit_direction = direction;
+  } else {
+    unit_direction = direction.normalized();
+  }
+
   ApplyFriction(seconds_delta);
-  Accelerate(vert, horz, seconds_delta);
+  Accelerate(unit_direction, seconds_delta);
   ApplyVelocity(seconds_delta);
 }
 
@@ -43,50 +51,14 @@ void Ball::ApplyVelocity(double seconds_delta) {
   pos_ += (seconds_delta * vel_);
 }
 
-namespace {
-// Modifies the vector `v' so that each component is within the range
-// [-clamp_to, +clamp_to]
-void Clamp(Eigen::Vector2d* v, const Eigen::Vector2d& clamp_to) {
-  if (v->y() < -clamp_to.y()) {
-    v->y() = -clamp_to.y();
-  } else if (v->y() > clamp_to.y()) {
-    v->y() = clamp_to.y();
-  }
-
-  if (v->x() < -clamp_to.x()) {
-    v->x() = -clamp_to.x();
-  } else if (v->x() > clamp_to.x()) {
-    v->x() = clamp_to.x();
-  }
-}
-}  // namespace
-
-void Ball::Accelerate(direction::Vertical vert, direction::Horizontal horz,
+void Ball::Accelerate(const Eigen::Vector2d& unit_direction,
                       double seconds_delta) {
-  auto delta_accel =  seconds_delta * kAccel;
-  switch (vert) {
-    case direction::Vertical::UP:
-      vel_.y() -= delta_accel.y();
-      break;
-    case direction::Vertical::DOWN:
-      vel_.y() += delta_accel.y();
-      break;
-    default:
-      break;  // Do Nothing
+  double delta_accel = seconds_delta * kAcceleration;
+  vel_ += (unit_direction * delta_accel);
+  if (vel_.norm() > kMaxVel) {
+    vel_.normalize();
+    vel_ *= kMaxVel;
   }
-  switch (horz) {
-    case direction::Horizontal::LEFT:
-      vel_.x() -= delta_accel.x();
-      break;
-    case direction::Horizontal::RIGHT:
-      vel_.x() += delta_accel.x();
-      break;
-    default:
-      break;  // Do Nothing
-  }
-
-  // Clamp velocity
-  Clamp(&vel_, kMaxVel);
 }
 
 }  // namespace pong
