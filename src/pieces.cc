@@ -24,15 +24,14 @@ SDL_Rect Ball::BoundingBox() const {
 void Ball::Move(const Eigen::Vector2d& direction, int millis_delta) {
   double seconds_delta = (static_cast<double>(millis_delta) / 1000.);
 
-  Eigen::Vector2d unit_direction;
+  // Only apply friction if not being accelerated. This avoid the friction
+  // acceleration and the explicit acceleration fighting.
   if (direction.isZero()) {
-    unit_direction = direction;
+    ApplyFriction(seconds_delta);
   } else {
-    unit_direction = direction.normalized();
+    Accelerate(direction.normalized(), seconds_delta);
   }
 
-  ApplyFriction(seconds_delta);
-  Accelerate(unit_direction, seconds_delta);
   ApplyVelocity(seconds_delta);
 }
 
@@ -44,7 +43,15 @@ std::ostream& operator<<(std::ostream& out, const Ball& ball) {
 }
 
 void Ball::ApplyFriction(double seconds_delta) {
-  // TODO implement
+  if (vel_.isZero())
+    return;
+
+  double frict_accel_norm = kFrictionAccel * seconds_delta;
+  if (frict_accel_norm > vel_.norm()) {
+    vel_ = {0, 0};
+  } else {
+    vel_ -= (vel_.normalized() * frict_accel_norm);
+  }
 }
 
 void Ball::ApplyVelocity(double seconds_delta) {

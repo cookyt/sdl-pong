@@ -104,8 +104,9 @@ struct PlayerInput {
   DPad dpad;
 
   // Returns a unit vector representing the direction the player wants to move
-  // in on a 2D field. Axis is oriented with positive directions being down and
-  // to the right 8-directional.
+  // in on a 2D field. Basically converts the 8-directional dpad to one of 8
+  // vectors. Axis is oriented with positive directions being down and to the
+  // right.
   Eigen::Vector2d MovementDirection();
 };
 
