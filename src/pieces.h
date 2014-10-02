@@ -30,7 +30,7 @@ class Ball {
  public:
   const double kAcceleration = 50;
   const double kMaxVel = 50;
-  const double kFrictionAccel = 3;
+  const double kFrictionAccel = 30;
 
   SDL_Rect BoundingBox() const;
 
@@ -53,7 +53,8 @@ class Ball {
   // vert: What direction to accelerate in the y axis
   // horz: what direction to accelerate in the x axis
   // seconds_delta: number of seconds the ball is moving over.
-  void Accelerate(const Eigen::Vector2d& unit_direction, double seconds_delta);
+  void Accelerate(const Eigen::Vector2d& unit_direction,
+                  double accel_m_per_sec2, double seconds_delta);
 
   Eigen::Vector2d vel_ {0, 0};
   Eigen::Vector2d pos_ {0, 0};

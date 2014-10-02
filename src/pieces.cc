@@ -26,10 +26,9 @@ void Ball::Move(const Eigen::Vector2d& direction, int millis_delta) {
 
   // Only apply friction if not being accelerated. This avoid the friction
   // acceleration and the explicit acceleration fighting.
-  if (direction.isZero()) {
-    ApplyFriction(seconds_delta);
-  } else {
-    Accelerate(direction.normalized(), seconds_delta);
+  ApplyFriction(seconds_delta);
+  if (!direction.isZero()) {
+    Accelerate(direction.normalized(), kAcceleration, seconds_delta);
   }
 
   ApplyVelocity(seconds_delta);
@@ -59,8 +58,8 @@ void Ball::ApplyVelocity(double seconds_delta) {
 }
 
 void Ball::Accelerate(const Eigen::Vector2d& unit_direction,
-                      double seconds_delta) {
-  double delta_accel = seconds_delta * kAcceleration;
+                      double accel_m_per_sec2, double seconds_delta) {
+  double delta_accel = seconds_delta * accel_m_per_sec2;
   vel_ += (unit_direction * delta_accel);
   if (vel_.norm() > kMaxVel) {
     vel_.normalize();
