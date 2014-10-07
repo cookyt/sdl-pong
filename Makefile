@@ -1,6 +1,6 @@
 # External Programs
 # -----------------
-CXX ?= clang++
+CXX = clang++
 PROTOC ?= protoc
 MKDIR_P ?= mkdir -p
 
