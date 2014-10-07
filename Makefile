@@ -36,7 +36,8 @@ CPPFLAGS := $(shell pkg-config --cflags $(PKG_CONFIG_LIBS)) \
 LIBS := $(shell pkg-config --libs $(PKG_CONFIG_LIBS)) \
         -lm
 
-CC_SRCS = $(SRC_DIR)/pieces.cc
+CC_SRCS = $(SRC_DIR)/pieces.cc \
+          $(SRC_DIR)/input.cc
 PROTO_SRCS =
 
 CC_BINS := $(BIN_DIR)/hello-sdl

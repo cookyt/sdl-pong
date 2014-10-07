@@ -1,2 +1,6 @@
-hello-sdl
 *.pyc
+
+# auto-generated directories
+bin/*
+build/*
+gen/*
