@@ -19,8 +19,6 @@ using ::sdl_util::SDLContext;
 namespace pong {
 
 constexpr int kDesiredFPS = 60;
-constexpr int kMillisPerFrame = 1000 / kDesiredFPS;
-
 
 // Structure representing a 4 directional button-based input where each button
 // can be independently pressed or depressed.
@@ -155,6 +153,8 @@ class App {
 };
 
 void App::Run() {
+  constexpr int kMillisPerFrame = 1000 / kDesiredFPS;
+
   running_ = true;
   while (running_) {
     int millis_before = SDL_GetTicks();
