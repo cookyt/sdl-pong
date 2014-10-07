@@ -9,7 +9,7 @@
 
 #define DISALLOW_COPY_AND_ASSIGN(ClassName)  \
   ClassName(const ClassName&) = delete;      \
-  ClassName& operator=(ClassName) = delete;
+  ClassName& operator=(ClassName) = delete
 
 namespace sdl_util {
 
