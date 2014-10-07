@@ -11,21 +11,6 @@ using std::string;
 
 namespace pong {
 
-// TODO convert to using directional vector2d scheme to avoid annoying switches
-// everywhere.
-namespace direction {
-enum class Vertical {
-  UP = -1,
-  NONE = 0,
-  DOWN = 1,
-};
-enum class Horizontal {
-  LEFT = -1,
-  NONE = 0,
-  RIGHT = 1,
-};
-}  // namespace direction
-
 class Ball {
  public:
   const double kAcceleration = 50;
