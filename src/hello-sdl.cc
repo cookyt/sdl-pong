@@ -59,7 +59,8 @@ void App::Run() {
 void App::ProcessEvents() {
   SDL_Event event;
   while (SDL_PollEvent(&event) != 0) {
-    if (event.type == SDL_QUIT) {
+    if ((event.type == SDL_QUIT) ||
+        (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q)) {
       running_ = false;
     }
     input_.dpad.ConsumeSdlKeyEvent(event);
