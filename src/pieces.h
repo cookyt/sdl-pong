@@ -42,7 +42,7 @@ class Ball {
                   double accel_m_per_sec2, double seconds_delta);
 
   Eigen::Vector2d vel_ {0, 0};
-  Eigen::Vector2d pos_ {0, 0};
+  Eigen::Vector2d pos_ {0, 0};  // bounding box center
   Eigen::Vector2d size_ {32, 32};  // width, height
 };
 

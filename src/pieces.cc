@@ -13,9 +13,10 @@ namespace pong {
 
 SDL_Rect Ball::BoundingBox() const {
   // TODO: width and height are arbitrary atm.
+  Eigen::Vector2d top_left = pos_ - (size_ / 2.);
   return {
-      static_cast<int>(pos_.x()),
-      static_cast<int>(pos_.y()),
+      static_cast<int>(top_left.x()),
+      static_cast<int>(top_left.y()),
       static_cast<int>(size_[0]),
       static_cast<int>(size_[1]),
   };
