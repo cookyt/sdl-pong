@@ -22,20 +22,20 @@ int DPad::GetCanceled() const {
     ((IsSet<RIGHT>() && !IsSet<LEFT>())  ? RIGHT : 0);
 }
 
-void DPad::ConsumeSdlKeyEvent(const SDL_Event& event) {
+void PlayerInput::ProcessSdlKeyEvent(const SDL_Event& event) {
   if (event.type == SDL_KEYDOWN) {
     switch (event.key.keysym.sym) {
-      case SDLK_UP:    Set<DPad::UP>(); break;
-      case SDLK_DOWN:  Set<DPad::DOWN>(); break;
-      case SDLK_LEFT:  Set<DPad::LEFT>(); break;
-      case SDLK_RIGHT: Set<DPad::RIGHT>(); break;
+      case SDLK_UP:    dpad.Set<DPad::UP>();    break;
+      case SDLK_DOWN:  dpad.Set<DPad::DOWN>();  break;
+      case SDLK_LEFT:  dpad.Set<DPad::LEFT>();  break;
+      case SDLK_RIGHT: dpad.Set<DPad::RIGHT>(); break;
     }
   } else if (event.type == SDL_KEYUP) {
     switch (event.key.keysym.sym) {
-      case SDLK_UP:    UnSet<DPad::UP>(); break;
-      case SDLK_DOWN:  UnSet<DPad::DOWN>(); break;
-      case SDLK_LEFT:  UnSet<DPad::LEFT>(); break;
-      case SDLK_RIGHT: UnSet<DPad::RIGHT>(); break;
+      case SDLK_UP:    dpad.UnSet<DPad::UP>();    break;
+      case SDLK_DOWN:  dpad.UnSet<DPad::DOWN>();  break;
+      case SDLK_LEFT:  dpad.UnSet<DPad::LEFT>();  break;
+      case SDLK_RIGHT: dpad.UnSet<DPad::RIGHT>(); break;
     }
   }
 }

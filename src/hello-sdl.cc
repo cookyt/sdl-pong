@@ -63,7 +63,7 @@ void App::ProcessEvents() {
         (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q)) {
       running_ = false;
     }
-    input_.dpad.ConsumeSdlKeyEvent(event);
+    input_.ProcessSdlKeyEvent(event);
   }
 }
 

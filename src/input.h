@@ -51,11 +51,6 @@ class DPad {
   // will have neither set (ditto for LEFT and RIGHT).
   int GetCanceled() const;
 
-  // If the given event is a keydown or keyup, and the keysym is one of
-  // SDLK_{UP,DOWN,LEFT,RIGHT}, then the corresponding button on this dpad is
-  // set or unset.
-  void ConsumeSdlKeyEvent(const SDL_Event& event);
-
   friend std::ostream& operator<<(std::ostream& out, const DPad& dpad);
 
  private:
@@ -83,6 +78,11 @@ struct PlayerInput {
   // vectors. Axis is oriented with positive directions being down and to the
   // right.
   Eigen::Vector2d MovementDirection() const;
+
+  // If the given event is a keydown or keyup, and the keysym is one of
+  // SDLK_{UP,DOWN,LEFT,RIGHT}, then the corresponding button on this dpad is
+  // set or unset.
+  void ProcessSdlKeyEvent(const SDL_Event& event);
 };
 
 }  // namespace pong
