@@ -4,12 +4,8 @@
 #define SDH_UTIL_H_
 
 #include <memory>
-
 #include <SDL.h>
-
-#define DISALLOW_COPY_AND_ASSIGN(ClassName)  \
-  ClassName(const ClassName&) = delete;      \
-  ClassName& operator=(ClassName) = delete
+#include "util.h"
 
 namespace sdl_util {
 
