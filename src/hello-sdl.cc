@@ -4,18 +4,26 @@
 
 #include <Eigen/Dense>
 #include <SDL.h>
+#include <SDL_ttf.h>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/format.hpp>
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "eigen-util.h"
-#include "input.h"
-#include "pieces.h"
-#include "sdl-util.h"
+#include "controller.h"
+#include "game.h"
+#include "rendering.h"
+#include "util.h"
+
+DEFINE_string(data_path, "data",
+              "The directory in which to look for data files.");
 
 using ::boost::format;
-using ::eigen_util::FormatVec2d;
-using ::sdl_util::ManagedWindow;
-using ::sdl_util::SDLContext;
+using ::util::format::FormatSdlRect;
+using ::util::format::FormatVec2d;
+using ::util::sdl::ManagedWindow;
+using ::util::sdl::SDLContext;
+using ::util::sdl::TTFContext;
 
 namespace pong {
 
@@ -23,7 +31,7 @@ constexpr int kDesiredFPS = 60;
 
 class App {
  public:
-  App(SDL_Window* window) : window_(CHECK_NOTNULL(window)) {}
+  App(SDL_Window* window);
   void Run();
 
  private:
@@ -32,16 +40,23 @@ class App {
   void Render();
 
   bool running_;  // Whether the main loop is currently running
-  PlayerInput input_;
   int last_update_millis_ {0};
-  Ball player_;
+  SdlPaddleController left_controller_;
+  FollowBallYController right_controller_;
+  GameBoard game_;
   SDL_Window* window_;  // Not owned
 };
+
+App::App(SDL_Window* window) : window_(CHECK_NOTNULL(window)) {
+  game_.SetLeftController(&left_controller_);
+  game_.SetRightController(&right_controller_);
+}
 
 void App::Run() {
   constexpr int kMillisPerFrame = 1000 / kDesiredFPS;
 
   running_ = true;
+  game_.Start();
   while (running_) {
     int millis_before = SDL_GetTicks();
 
@@ -63,36 +78,28 @@ void App::ProcessEvents() {
         (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q)) {
       running_ = false;
     }
-    input_.ProcessSdlKeyEvent(event);
+    left_controller_.ProcessSdlEvent(event);
   }
 }
 
 void App::UpdateGame() {
   int millis_now = SDL_GetTicks();
   if (last_update_millis_ != 0) {  // Don't update on first frame
-    int millis_delta = millis_now - last_update_millis_;
-    auto unit_direction = input_.MovementDirection();
-    player_.Move(unit_direction, millis_delta);
-
-    constexpr int kLogSeconds = 1;
-    DLOG_EVERY_N(INFO, kDesiredFPS * kLogSeconds)
-        << format("%s\ndirection%s\n%s") % player_
-                                         % FormatVec2d(unit_direction)
-                                         % input_.dpad;
+    double millis_delta = millis_now - last_update_millis_;
+    bool ran_before_update = game_.IsRunning();
+    game_.Update(millis_delta / 1000.0);
+    if (ran_before_update && !game_.IsRunning()) {
+      // TODO add mechanism to determince who scored.
+      LOG(INFO) << "Player scored! New score: left:" << game_.left_player_.score
+                << " right:" << game_.right_player_.score;
+    }
   }
   last_update_millis_ = millis_now;
 }
 
 void App::Render() {
   SDL_Surface* screen_surface = SDL_GetWindowSurface(window_);
-  // Clear screen w/ black color
-  SDL_FillRect(screen_surface, nullptr,
-               SDL_MapRGB(screen_surface->format, 0, 0, 0));
-
-  SDL_Rect rect = player_.BoundingBox();
-  SDL_FillRect(screen_surface, &rect,
-               SDL_MapRGB(screen_surface->format, 0xFF, 0xFF, 0xFF));
-
+  RenderGameToSdlSurface(game_, screen_surface);
   SDL_UpdateWindowSurface(window_);
 }
 
@@ -100,18 +107,27 @@ void App::Render() {
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  LOG(INFO) << "Initializing...";
+  LOG(INFO) << "Initializing SDL";
   SDLContext sdl(SDL_INIT_VIDEO);
-  CHECK(sdl.Success()) << "Could not initialize SDL: " << SDL_GetError();
+  sdl.CheckSuccess();
 
-  LOG(INFO) << "Creating window";
-  constexpr int kScreenXPos = SDL_WINDOWPOS_UNDEFINED;
-  constexpr int kScreenYPos = SDL_WINDOWPOS_UNDEFINED;
-  constexpr int kScreenWidth  = 640;
-  constexpr int kScreenHeight = 480;
-  ManagedWindow window(SDL_CreateWindow("Hello World!", kScreenXPos,
-        kScreenYPos, kScreenWidth, kScreenHeight, SDL_WINDOW_SHOWN));
+  LOG(INFO) << "Initializing SDL_TTF";
+  TTFContext ttf;
+  ttf.CheckSuccess();
+
+  const SDL_Rect kScreenParams = {
+    SDL_WINDOWPOS_UNDEFINED,  // x
+    SDL_WINDOWPOS_UNDEFINED,  // y
+    640,                      // width
+    640,                      // height
+  };
+  LOG(INFO) << "Creating SDL window with params: "
+            << FormatSdlRect(kScreenParams);
+  ManagedWindow window(SDL_CreateWindow("Hello World!", kScreenParams.x,
+                                        kScreenParams.y, kScreenParams.w,
+                                        kScreenParams.h, SDL_WINDOW_SHOWN));
   CHECK(window) << "Could not create SDL window: " << SDL_GetError();
 
   LOG(INFO) << "Starting main loop";

@@ -4,7 +4,6 @@ CXX = clang++
 PROTOC ?= protoc
 MKDIR_P ?= mkdir -p
 
-
 # Special Directories
 # -------------------
 # Root of the source tree
@@ -24,20 +23,21 @@ BUILD_DIR = build
 # -------------------
 # External libraries configured using `pkg-config`
 PKG_CONFIG_LIBS := libglog \
-                   protobuf \
                    gflags \
                    eigen3 \
-                   sdl2
+                   sdl2 \
+                   SDL2_ttf
 
-CXXFLAGS += -std=c++11 -Wall -pedantic -g
+CXXFLAGS += -std=c++11 -Wall -Wno-unused-private-field -pedantic -g
 CPPFLAGS := $(shell pkg-config --cflags $(PKG_CONFIG_LIBS)) \
             -I$(GEN_DIR) -I$(SRC_DIR) \
             -DEIGEN_DONT_ALIGN  # trade performance for simpler code
 LIBS := $(shell pkg-config --libs $(PKG_CONFIG_LIBS)) \
         -lm
 
-CC_SRCS = $(SRC_DIR)/pieces.cc \
-          $(SRC_DIR)/input.cc
+CC_SRCS = $(SRC_DIR)/controller.cc \
+          $(SRC_DIR)/rendering.cc \
+          $(SRC_DIR)/game.cc
 PROTO_SRCS =
 
 CC_BINS := $(BIN_DIR)/hello-sdl
