@@ -56,6 +56,7 @@ void App::Run() {
   constexpr int kMillisPerFrame = 1000 / kDesiredFPS;
 
   running_ = true;
+  game_.SetupNewGame();
   game_.Start();
   while (running_) {
     int millis_before = SDL_GetTicks();
@@ -77,6 +78,12 @@ void App::ProcessEvents() {
     if ((event.type == SDL_QUIT) ||
         (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q)) {
       running_ = false;
+    }
+    if (!game_.IsRunning()) {
+      if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE) {
+        game_.SetupNewGame();
+        game_.Start();
+      }
     }
     left_controller_.ProcessSdlEvent(event);
   }

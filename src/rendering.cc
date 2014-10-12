@@ -64,6 +64,8 @@ void RenderGameToSdlSurface(const GameBoard& game, SDL_Surface* surface) {
   };
   SDL_FillRect(surface, &middle_line_rect,
                SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
+
+  // TODO: render the player score.
 }
 
 }  // namespace pong
