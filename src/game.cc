@@ -146,7 +146,7 @@ void Ball::Update(double seconds_delta) {
 
 std::ostream& operator<<(std::ostream& stream, Ball ball) {
   using ::util::format::FormatVec2d;
-  return stream << boost::format("pong::Ball{bounds=%s velocity=%s}") %
+  return stream << boost::format("Ball(bounds=%s velocity=%s)") %
                        ball.bounds_ % FormatVec2d(ball.velocity_);
 }
 
