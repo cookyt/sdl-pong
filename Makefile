@@ -40,7 +40,7 @@ CC_SRCS = $(SRC_DIR)/controller.cc \
           $(SRC_DIR)/game.cc
 PROTO_SRCS =
 
-CC_BINS := $(BIN_DIR)/hello-sdl
+CC_BINS := $(BIN_DIR)/pong
 
 CC_GEN_PROTO = $(PROTO_SRCS:$(SRC_DIR)/%.proto=$(GEN_DIR)/%.pb.cc)
 CC_OBJS := $(CC_SRCS:$(SRC_DIR)/%.cc=$(BUILD_DIR)/%.cc.o) \
