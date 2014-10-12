@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
   };
   LOG(INFO) << "Creating SDL window with params: "
             << FormatSdlRect(kScreenParams);
-  ManagedWindow window(SDL_CreateWindow("Hello World!", kScreenParams.x,
+  ManagedWindow window(SDL_CreateWindow("Cookyt's Pong", kScreenParams.x,
                                         kScreenParams.y, kScreenParams.w,
                                         kScreenParams.h, SDL_WINDOW_SHOWN));
   CHECK(window) << "Could not create SDL window: " << SDL_GetError();
