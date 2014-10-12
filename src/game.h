@@ -19,9 +19,9 @@ enum class BoundingWall {
 };
 std::ostream& operator<<(std::ostream& stream, BoundingWall wall);
 
-// Bounding box for 2d objects in game-units. For posterity, I'll say
-// one game-unit = one meter. Note that game units do not define a mapping to
-// pixels on screen.
+// Bounding box for 2d objects in game-units (gu). For posterity, I'll say one
+// gu = one meter. Note that game units do not define a mapping to pixels on
+// screen.
 struct BoundingBox {
   BoundingBox() : top_left(0, 0), size(0, 0) {}
   BoundingBox(double left_x, double top_y, double width, double height)
@@ -131,20 +131,11 @@ class Ball {
 
 class GameBoard {
  public:
-  struct Player {
-    Player(GameBoard* game_board) : paddle(game_board) {}
-
-    Paddle paddle;
-    int score = 0;
-  };
+  enum class Player { NONE, LEFT, RIGHT };
 
   // TODO have to deal w/ aspect ratio of game board vs aspect ratio of
   // rendering window. The square aspect ratio here isn't working well.
-  GameBoard()
-      : bounds_(0, 0, 1, 1),
-        ball_(this),
-        left_player_(this),
-        right_player_(this) {
+  GameBoard() : ball_(this), left_paddle_(this), right_paddle_(this) {
     SetupNewGame();
   }
 
@@ -153,31 +144,38 @@ class GameBoard {
   // board, and verticall in the center), and sets the ball's initial velocity
   // to serve in the direction of the right player.
   void SetupNewGame();
-  void Start() { running_ = true; }
-  bool IsRunning() { return running_; }
+  bool IsGameOver() { return game_over_; }
+  Player LastPlayerToScore() { return last_player_to_score_; }
 
   void Update(double seconds_delta);
 
   void BounceBall(Ball* ball, BoundingWall hit_wall);
 
   void SetLeftController(PaddleController* controller) {
-    left_player_.paddle.SetController(controller);
+    left_paddle_.SetController(controller);
   }
   void SetRightController(PaddleController* controller) {
-    right_player_.paddle.SetController(controller);
+    right_paddle_.SetController(controller);
   }
+
+  // Game pieces
+  Ball ball_;
+  Paddle left_paddle_;
+  Paddle right_paddle_;
 
   // Defines the area within which all game pieces (ball and both paddles)
   // should be visible when the game is running.
-  BoundingBox bounds_;
+  BoundingBox bounds_ = {0, 0, 1, 1};
 
-  Ball ball_;
-  Player left_player_;
-  Player right_player_;
+  int left_score_ = 0;
+  int right_score_ = 0;
 
  private:
-  bool running_;
+  bool game_over_ = true;
+  Player last_player_to_score_ = Player::NONE;
 };
+
+std::ostream& operator<<(std::ostream& stream, GameBoard::Player player);
 
 }  // namespace pong
 

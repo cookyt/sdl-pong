@@ -82,8 +82,8 @@ tuple<double, BoundingWall> MinTimeToWall(const Ball& ball, double vel,
     bound = ball.bounds_.Bound(positive_wall);
   }
 
-  double time_to_wall = std::abs((wall_pos - bound) / vel);
-
+  double time_to_wall = (wall_pos - bound) / vel;
+  CHECK(time_to_wall >= 0) << "Unexpected negative time_to_wall for a Ball";
   return std::make_tuple(time_to_wall, wall);
 }
 
@@ -104,15 +104,10 @@ tuple<double, BoundingWall> MinTimeToWall(const Ball& ball) {
 }  // namespace
 
 void Ball::Update(double seconds_delta) {
+  // TODO: in a confined space, this might loop forever. I don't have any out in
+  // that case, but it shouldn't matter for a normal game's setup.
   auto min_time_to_wall = MinTimeToWall(*this);
-  int num_times_bounced = 0;
   while (std::get<0>(min_time_to_wall) < seconds_delta) {
-    DLOG(INFO)
-        << boost::format(
-               "bouncing ball=%s wall=%s min_time_to_wall=%s time_delta=%s") %
-               *this % std::get<1>(min_time_to_wall) %
-               std::get<0>(min_time_to_wall) % seconds_delta;
-
     // Spend some time to move the ball to the point of contact with the wall
     bounds_.top_left += std::get<0>(min_time_to_wall) * velocity_;
     seconds_delta -= std::get<0>(min_time_to_wall);
@@ -123,22 +118,13 @@ void Ball::Update(double seconds_delta) {
     // The previous bouce of the ball caused the game to end (one of the players
     // missed the return), so don't bother trying to recalculate ball position.
     // TODO: responding to the end of the game this way feels a bit janky.
-    if (!game_board_->IsRunning()) {
+    if (game_board_->IsGameOver()) {
       break;
     }
 
     // Recalculate whether the ball will bounce off another wall in the same
     // update's time frame.
     min_time_to_wall = MinTimeToWall(*this);
-
-    // TODO: in a confined space, this might loop forever. I don't have any out
-    // in that case, but it shouldn't matter for a normal game's setup.
-    num_times_bounced += 1;
-  }
-
-  if (num_times_bounced != 0) {
-    DLOG(INFO) << "ball bounced " << num_times_bounced
-               << " times in one update";
   }
 
   bounds_.top_left += seconds_delta * velocity_;
@@ -159,22 +145,22 @@ constexpr double kPaddleSpeed_gups = kBallSize_gu * 10;
 
 void GameBoard::SetupNewGame() {
   // setup left paddle
-  left_player_.paddle.bounds_.Width(kBallSize_gu);
-  left_player_.paddle.bounds_.Height(3 * kBallSize_gu);
-  left_player_.paddle.bounds_.Center(bounds_.Center());
-  left_player_.paddle.bounds_.Left(bounds_.Left());
-  left_player_.paddle.top_bound_ = bounds_.Top();
-  left_player_.paddle.bottom_bound_ = bounds_.Bottom();
-  left_player_.paddle.max_speed_ = kPaddleSpeed_gups;
+  left_paddle_.bounds_.Width(kBallSize_gu);
+  left_paddle_.bounds_.Height(3 * kBallSize_gu);
+  left_paddle_.bounds_.Center(bounds_.Center());
+  left_paddle_.bounds_.Left(bounds_.Left());
+  left_paddle_.top_bound_ = bounds_.Top();
+  left_paddle_.bottom_bound_ = bounds_.Bottom();
+  left_paddle_.max_speed_ = kPaddleSpeed_gups;
 
   // setup right paddle
-  right_player_.paddle.bounds_.Width(kBallSize_gu);
-  right_player_.paddle.bounds_.Height(3 * kBallSize_gu);
-  right_player_.paddle.bounds_.Center(bounds_.Center());
-  right_player_.paddle.bounds_.Right(bounds_.Right());
-  right_player_.paddle.top_bound_ = bounds_.Top();
-  right_player_.paddle.bottom_bound_ = bounds_.Bottom();
-  right_player_.paddle.max_speed_ = kPaddleSpeed_gups;
+  right_paddle_.bounds_.Width(kBallSize_gu);
+  right_paddle_.bounds_.Height(3 * kBallSize_gu);
+  right_paddle_.bounds_.Center(bounds_.Center());
+  right_paddle_.bounds_.Right(bounds_.Right());
+  right_paddle_.top_bound_ = bounds_.Top();
+  right_paddle_.bottom_bound_ = bounds_.Bottom();
+  right_paddle_.max_speed_ = kPaddleSpeed_gups;
 
   // setup ball
   // TODO: randomized who the ball is served to, and at what angle.
@@ -183,17 +169,19 @@ void GameBoard::SetupNewGame() {
   ball_.velocity_ = util::DirectionAndMagnitude(
       {1, 2}, kInitialBallSpeed_gups);  // arbitrary
 
-  ball_.valid_space_.top_left = {left_player_.paddle.bounds_.Right(),
+  ball_.valid_space_.top_left = {left_paddle_.bounds_.Right(),
                                  bounds_.Top()};
-  ball_.valid_space_.Width(right_player_.paddle.bounds_.Left() -
-                           left_player_.paddle.bounds_.Right());
+  ball_.valid_space_.Width(right_paddle_.bounds_.Left() -
+                           left_paddle_.bounds_.Right());
   ball_.valid_space_.Height(bounds_.Height());
+
+  game_over_ = false;
 }
 
 void GameBoard::Update(double seconds_delta) {
-  if (running_) {
-    left_player_.paddle.Update(seconds_delta);
-    right_player_.paddle.Update(seconds_delta);
+  if (!IsGameOver()) {
+    left_paddle_.Update(seconds_delta);
+    right_paddle_.Update(seconds_delta);
     ball_.Update(seconds_delta);
   }
 }
@@ -202,7 +190,7 @@ namespace {
 // Returns true if the ball will bounce off the paddle in this update. Just
 // checks the Y positions and Heights of both objects, ignores the X position
 // and width.
-bool WillBounce(const Paddle& paddle, const Ball& ball) {
+bool WillBounce(const Ball& ball, const Paddle& paddle) {
   if (ball.bounds_.Top() > paddle.bounds_.Bottom() ||
       ball.bounds_.Bottom() < paddle.bounds_.Top()) {
     return false;
@@ -217,8 +205,8 @@ constexpr double kPaddleSpeedupFactor = 1.05;
 inline void BounceBallOffPaddle(GameBoard* game) {
   game->ball_.velocity_.x() *= -1;
   game->ball_.velocity_ *= kBallSpeedupFactor;
-  game->left_player_.paddle.max_speed_ *= kPaddleSpeedupFactor;
-  game->right_player_.paddle.max_speed_ *= kPaddleSpeedupFactor;
+  game->left_paddle_.max_speed_ *= kPaddleSpeedupFactor;
+  game->right_paddle_.max_speed_ *= kPaddleSpeedupFactor;
 }
 }  // namespace
 
@@ -230,26 +218,41 @@ void GameBoard::BounceBall(Ball* ball, BoundingWall hit_wall) {
       break;
 
     case BoundingWall::LEFT:
-      if (WillBounce(left_player_.paddle, ball_)) {
+      if (WillBounce(ball_, left_paddle_)) {
         BounceBallOffPaddle(this);
       } else {
-        right_player_.score += 1;
-        running_ = false;
+        right_score_ += 1;
+        last_player_to_score_ = Player::RIGHT;
+        game_over_ = true;
       }
       break;
 
     case BoundingWall::RIGHT:
-      if (WillBounce(right_player_.paddle, ball_)) {
+      if (WillBounce(ball_, right_paddle_)) {
         BounceBallOffPaddle(this);
       } else {
-        left_player_.score += 1;
-        running_ = false;
+        left_score_ += 1;
+        last_player_to_score_ = Player::LEFT;
+        game_over_ = true;
       }
       break;
 
     default:
       LOG(FATAL) << "Unexpected value for wall off which the ball is bouncing: "
                  << static_cast<int>(hit_wall);
+  }
+}
+
+std::ostream& operator<<(std::ostream& stream, GameBoard::Player player) {
+  switch (player) {
+    case GameBoard::Player::NONE:  return stream << "NONE";
+    case GameBoard::Player::LEFT:  return stream << "LEFT";
+    case GameBoard::Player::RIGHT: return stream << "RIGHT";
+    default:
+      LOG(WARNING)
+          << "Tried to serialize unexpected pong::GameBoard::Player value: "
+          << static_cast<int>(player);
+      return stream << static_cast<int>(player);
   }
 }
 

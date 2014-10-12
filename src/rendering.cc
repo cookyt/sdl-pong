@@ -42,13 +42,13 @@ void RenderGameToSdlSurface(const GameBoard& game, SDL_Surface* surface) {
 
   // Fill in a white rect for the left paddle
   rect =
-      BoundsToSdlRect(game.left_player_.paddle.bounds_, origin_px, px_per_gu);
+      BoundsToSdlRect(game.left_paddle_.bounds_, origin_px, px_per_gu);
   SDL_FillRect(surface, &rect,
                SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
 
   // Fill in a white rect for the right paddle
   rect =
-      BoundsToSdlRect(game.right_player_.paddle.bounds_, origin_px, px_per_gu);
+      BoundsToSdlRect(game.right_paddle_.bounds_, origin_px, px_per_gu);
   SDL_FillRect(surface, &rect,
                SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
 
@@ -57,10 +57,10 @@ void RenderGameToSdlSurface(const GameBoard& game, SDL_Surface* surface) {
       (game.ball_.bounds_.Width() / 2) * px_per_gu.x();
   int board_center_x = static_cast<int>(origin_px.x()) + surface->w / 2;
   SDL_Rect middle_line_rect = {
-    board_center_x - (line_width_px / 2),
-    0,
-    line_width_px,
-    surface->h,
+      board_center_x - (line_width_px / 2),  // x
+      0,                                     // y
+      line_width_px,                         // width
+      surface->h,                            // height
   };
   SDL_FillRect(surface, &middle_line_rect,
                SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));

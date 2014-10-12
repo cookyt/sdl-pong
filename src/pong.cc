@@ -39,11 +39,14 @@ class App {
   void UpdateGame();
   void Render();
 
-  bool running_;  // Whether the main loop is currently running
-  int last_update_millis_ {0};
+  bool running_ = false;  // Whether the main loop is currently running
+  bool game_paused_ = true;  // Whether to update the game state
+  int last_game_update_msecs_ {0};
+
   SdlPaddleController left_controller_;
   FollowBallYController right_controller_;
   GameBoard game_;
+
   SDL_Window* window_;  // Not owned
 };
 
@@ -57,17 +60,16 @@ void App::Run() {
 
   running_ = true;
   game_.SetupNewGame();
-  game_.Start();
   while (running_) {
-    int millis_before = SDL_GetTicks();
+    int msecs_before = SDL_GetTicks();
 
     ProcessEvents();
     UpdateGame();
     Render();
 
-    int sleep_millis = kMillisPerFrame - (SDL_GetTicks() - millis_before);
-    if (sleep_millis > 0) {
-      SDL_Delay(sleep_millis);
+    int sleep_msecs = kMillisPerFrame - (SDL_GetTicks() - msecs_before);
+    if (sleep_msecs > 0) {
+      SDL_Delay(sleep_msecs);
     }
   }
 }
@@ -79,29 +81,33 @@ void App::ProcessEvents() {
         (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q)) {
       running_ = false;
     }
-    if (!game_.IsRunning()) {
-      if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE) {
-        game_.SetupNewGame();
-        game_.Start();
-      }
+    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE &&
+        game_.IsGameOver()) {
+      game_.SetupNewGame();
+      game_paused_ = false;
+    }
+    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+      game_paused_ = !game_paused_;
     }
     left_controller_.ProcessSdlEvent(event);
   }
 }
 
 void App::UpdateGame() {
-  int millis_now = SDL_GetTicks();
-  if (last_update_millis_ != 0) {  // Don't update on first frame
-    double millis_delta = millis_now - last_update_millis_;
-    bool ran_before_update = game_.IsRunning();
-    game_.Update(millis_delta / 1000.0);
-    if (ran_before_update && !game_.IsRunning()) {
-      // TODO add mechanism to determince who scored.
-      LOG(INFO) << "Player scored! New score: left:" << game_.left_player_.score
-                << " right:" << game_.right_player_.score;
+  int msecs_now = SDL_GetTicks();
+  if (last_game_update_msecs_ != 0) {  // Don't update on first frame
+    double msecs_delta = msecs_now - last_game_update_msecs_;
+
+    if (!game_paused_ && !game_.IsGameOver()) {
+      game_.Update(msecs_delta / 1000.0);
+      if (game_.IsGameOver()) {
+        LOG(INFO) << "Player " << game_.LastPlayerToScore()
+                  << " scored! Current score: left:" << game_.left_score_
+                  << " right:" << game_.right_score_;
+      }
     }
   }
-  last_update_millis_ = millis_now;
+  last_game_update_msecs_ = msecs_now;
 }
 
 void App::Render() {
@@ -125,10 +131,10 @@ int main(int argc, char** argv) {
   ttf.CheckSuccess();
 
   const SDL_Rect kScreenParams = {
-    SDL_WINDOWPOS_UNDEFINED,  // x
-    SDL_WINDOWPOS_UNDEFINED,  // y
-    640,                      // width
-    640,                      // height
+      SDL_WINDOWPOS_UNDEFINED,  // x
+      SDL_WINDOWPOS_UNDEFINED,  // y
+      640,                      // width
+      640,                      // height
   };
   LOG(INFO) << "Creating SDL window with params: "
             << FormatSdlRect(kScreenParams);
