@@ -13,3 +13,10 @@ Dependencies
 + eigen3
 
 Note that the makefile uses pkg-config to find libraries.
+
+Controls
+--------
+Still working on things, but for now:
+  + UP and DOWN arrows to move the left paddle
+  + SPACE to restart game once someone scores
+  + ESC to pause game (game starts paused by default)
